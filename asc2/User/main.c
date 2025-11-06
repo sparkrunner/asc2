@@ -3,35 +3,38 @@
 #include "LED.h"
 #include "Key.h"
 #include "Timer.h"
-#include "Menu.h"
 #include "Encoder.h"
+#include "Serial.h"
 
-// uint16_t LEDStatus;
+
+int16_t Speed;
 
 int main(void)
 {
 	Key_Init();
-	LED_Init();
 	OLED_Init();
 	Timer_Init();
 	Encoder_Init();
-	Menu_Init();
+	Serial_Init();
 	while (1)
 	{
-		Menu_Show();
-		uint8_t Key = Key_GetNum();
-		Menu_Option(Key);
-		LED_DirSet(Menu_LED_Direction());
-		LED_SpeedSet(Menu_LED_Speed());
+		OLED_ShowSignedNum(1, 7, Speed, 4);
+		Serial_Printf("%d\n", Speed);
 	}
 }
 
 void TIM2_IRQHandler(void)
 {
+	static uint16_t Speed_Tim = 0;
 	if (TIM_GetITStatus(TIM2, TIM_IT_Update) == SET)
 	{
 		Key_Tick();
-		LED_Tick();
+		Speed_Tim++;
+		if (Speed_Tim == 100 - 1)
+		{
+			Speed = Encoder_Get();
+			Speed_Tim = 0;
+		}
 		TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
 	}
 }

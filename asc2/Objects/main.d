@@ -32,5 +32,6 @@
 .\objects\main.o: .\Hardware\LED.h
 .\objects\main.o: .\Hardware\Key.h
 .\objects\main.o: .\System\Timer.h
-.\objects\main.o: .\Hardware\Menu.h
 .\objects\main.o: .\Hardware\Encoder.h
+.\objects\main.o: .\Hardware\Serial.h
+.\objects\main.o: D:\Keil5\ARM\ARMCC\Bin\..\include\stdio.h
