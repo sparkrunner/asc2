@@ -721,16 +721,6 @@
               <FilePath>.\Hardware\Menu.h</FilePath>
             </File>
             <File>
-              <FileName>Printer.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\Hardware\Printer.c</FilePath>
-            </File>
-            <File>
-              <FileName>Printer.h</FileName>
-              <FileType>5</FileType>
-              <FilePath>.\hardware\Printer.h</FilePath>
-            </File>
-            <File>
               <FileName>Encoder.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\hardware\Encoder.c</FilePath>
@@ -749,6 +739,26 @@
               <FileName>Serial.h</FileName>
               <FileType>5</FileType>
               <FilePath>.\Hardware\Serial.h</FilePath>
+            </File>
+            <File>
+              <FileName>PWM.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Hardware\PWM.c</FilePath>
+            </File>
+            <File>
+              <FileName>PWM.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Hardware\PWM.h</FilePath>
+            </File>
+            <File>
+              <FileName>Motor.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\Hardware\Motor.c</FilePath>
+            </File>
+            <File>
+              <FileName>Motor.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\Hardware\Motor.h</FilePath>
             </File>
           </Files>
         </Group>
