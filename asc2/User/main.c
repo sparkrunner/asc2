@@ -8,7 +8,7 @@
 #include "Motor.h"
 
 
-int16_t Speed, SSpeed;
+int16_t Speed, SSpeed, SSpeed2;
 
 int main(void)
 { 
@@ -20,15 +20,17 @@ int main(void)
 	Serial_Init();
 	while (1)
 	{
-		if (Key_Check(3, KEY_UP))
+		if (Key_Check(2, KEY_UP))
 		{
-			Speed += 20;
+			Speed += 30;
 			if (Speed > 60) Speed = 0;
 		}
-		Motor_SetSpeed(Speed);
+		Motor1_SetSpeed(Speed);
+		Motor2_SetSpeed(Speed);
 		OLED_ShowSignedNum(1, 7, Speed, 4);
 		OLED_ShowSignedNum(2, 7, SSpeed, 4);
-//		Serial_Printf("%d\n", Speed);
+		OLED_ShowSignedNum(3, 7, SSpeed2, 4);
+		Serial_Printf("%d,%d\n", SSpeed, SSpeed2);
 	}
 }
 
@@ -42,7 +44,8 @@ void TIM4_IRQHandler(void)
 		if (Speed_Tim == 10)
 		{
 			Speed_Tim = 0;
-			SSpeed = Encoder_Get();
+			SSpeed = Encoder1_Get();
+			SSpeed2 = Encoder2_Get();
 		}
 		TIM_ClearITPendingBit(TIM4, TIM_IT_Update);
 	}

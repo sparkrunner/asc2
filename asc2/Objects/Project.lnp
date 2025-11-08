@@ -30,7 +30,6 @@
 ".\objects\led.o"
 ".\objects\key.o"
 ".\objects\oled.o"
-".\objects\menu.o"
 ".\objects\encoder.o"
 ".\objects\serial.o"
 ".\objects\pwm.o"
