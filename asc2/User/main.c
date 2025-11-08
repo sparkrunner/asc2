@@ -18,6 +18,7 @@ int main(void)
 	Encoder_Init();
 	Motor_Init();
 	Serial_Init();
+	OLED_ShowChar(2, 2, '!');
 	while (1)
 	{
 		if (Key_Check(2, KEY_UP))
@@ -34,19 +35,18 @@ int main(void)
 	}
 }
 
-void TIM4_IRQHandler(void)
-{
-	static uint32_t Speed_Tim = 0;
-	if (TIM_GetITStatus(TIM4, TIM_IT_Update) == SET)
+void TIM1_UP_IRQHandler(void) {
+    static uint32_t Speed_Tim = 0;
+	if (TIM_GetITStatus(TIM1, TIM_IT_Update) == SET)
 	{
 		Key_Tick();
 		Speed_Tim++;
-		if (Speed_Tim == 10)
+		if (Speed_Tim == 100)
 		{
 			Speed_Tim = 0;
 			SSpeed = Encoder1_Get();
 			SSpeed2 = Encoder2_Get();
 		}
-		TIM_ClearITPendingBit(TIM4, TIM_IT_Update);
+		TIM_ClearITPendingBit(TIM1, TIM_IT_Update);
 	}
 }

@@ -1,41 +1,32 @@
-#include "stm32f10x.h"                  // Device header
+#include "stm32f10x.h"
 
-void Timer_Init(void)
-{
-	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM4, ENABLE);
-	
-	TIM_InternalClockConfig(TIM4);
-	
-	TIM_TimeBaseInitTypeDef TIM_TimeBaseInitStructure;
-	TIM_TimeBaseInitStructure.TIM_ClockDivision = TIM_CKD_DIV1;
-	TIM_TimeBaseInitStructure.TIM_CounterMode = TIM_CounterMode_Up;
-	TIM_TimeBaseInitStructure.TIM_Period = 1000 - 1;
-	TIM_TimeBaseInitStructure.TIM_Prescaler = 72 - 1;
-	TIM_TimeBaseInitStructure.TIM_RepetitionCounter = 0;
-	TIM_TimeBaseInit(TIM4, &TIM_TimeBaseInitStructure);
-	
-	TIM_ClearFlag(TIM4, TIM_FLAG_Update);
-	TIM_ITConfig(TIM4, TIM_IT_Update, ENABLE);
-	
-	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
-	
-	NVIC_InitTypeDef NVIC_InitStructure;
-	NVIC_InitStructure.NVIC_IRQChannel = TIM4_IRQn;
-	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 2;
-	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
-	NVIC_Init(&NVIC_InitStructure);
-	
-	TIM_Cmd(TIM4, ENABLE);
-}
+// 全局变量：计时毫秒数
+uint32_t TIM1_TimeMs = 0;
 
-/*
-void TIM4_IRQHandler(void)
-{
-	if (TIM_GetITStatus(TIM4, TIM_IT_Update) == SET)
-	{
-		
-		TIM_ClearITPendingBit(TIM4, TIM_IT_Update);
-	}
+void Timer_Init(void) {
+    // 1. 使能时钟（APB2总线和TIM1）
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM1, ENABLE);
+    
+    // 2. 配置时基参数
+    TIM_TimeBaseInitTypeDef TIM_TimeBaseInitStruct;
+    TIM_TimeBaseInitStruct.TIM_Prescaler = 7200 - 1;       // 预分频器：72MHz/(7199+1)=10kHz
+    TIM_TimeBaseInitStruct.TIM_CounterMode = TIM_CounterMode_Up; // 向上计数
+    TIM_TimeBaseInitStruct.TIM_Period = 10 - 1;             // 自动重装载值：10次计数=1ms
+    TIM_TimeBaseInitStruct.TIM_ClockDivision = TIM_CKD_DIV1; // 时钟分频（计时无需配置）
+    TIM_TimeBaseInitStruct.TIM_RepetitionCounter = 0;  // 重复计数器（高级定时器特有，计时用0）
+    TIM_TimeBaseInit(TIM1, &TIM_TimeBaseInitStruct);
+    
+    // 3. 使能更新中断（溢出时触发）
+    TIM_ITConfig(TIM1, TIM_IT_Update, ENABLE);
+    
+    // 4. 配置NVIC中断（注意TIM1的中断通道名）
+    NVIC_InitTypeDef NVIC_InitStruct;
+    NVIC_InitStruct.NVIC_IRQChannel = TIM1_UP_IRQn;    // TIM1更新中断通道（区别于TIM6）
+    NVIC_InitStruct.NVIC_IRQChannelPreemptionPriority = 2; // 抢占优先级（按需设置）
+    NVIC_InitStruct.NVIC_IRQChannelSubPriority = 1;    // 子优先级（可与TIM6区分）
+    NVIC_InitStruct.NVIC_IRQChannelCmd = ENABLE;
+    NVIC_Init(&NVIC_InitStruct);
+    
+    // 5. 启动定时器（高级定时器需额外使能计数器）
+    TIM_Cmd(TIM1, ENABLE);
 }
-*/
