@@ -8,7 +8,7 @@
 #include "Motor.h"
 #include <string.h>
 
-int32_t Speed, SSpeed1, SSpeed2, Angle1, Angle2;
+int32_t Speed, SSpeed1, SSpeed2, Angle1, Angle2, TaskMode = 1;
 
 struct PID {
 	float Target, Actual, Out;			//目标值，实际值，输出值
@@ -19,17 +19,17 @@ struct PID {
 void PID_Init_M1(void)
 {
 	M1 = MInit;
-	M1.Kp = 1.8;
-	M1.Ki = 0.8;
-	M1.Kd = 0.1;
+	M1.Kp = 1.58;
+	M1.Ki = 0.7;
+	M1.Kd = 0.15;
 }
 
 void PID_Init_M2(void)
 {
 	M2 = MInit;
-	M2.Kp = 1.8;
-	M2.Ki = 0.8;
-	M2.Kd = 0.1;
+	M2.Kp = 1.58;
+	M2.Ki = 0.7;
+	M2.Kd = 0.15;
 }
 
 void PID_SetSpeed1(int32_t Speed)
@@ -46,7 +46,7 @@ void PID_SetSpeed1(int32_t Speed)
 	/*输出限幅*/
 	if (M1.Out > 100) {M1.Out = 100;}		//限制输出值最大为100
 	if (M1.Out < -100) {M1.Out = -100;}	//限制输出值最小为100
-	
+	if (Speed == 0) M1.Out = 0;
 	Motor1_SetSpeed(M1.Out);
 }
 
@@ -68,10 +68,9 @@ void PID_SetSpeed2(int32_t Speed)
 	/*输出限幅*/
 	if (M2.Out > 100) {M2.Out = 100;}		//限制输出值最大为100
 	if (M2.Out < -100) {M2.Out = -100;}	//限制输出值最小为100
-	
 	Motor2_SetSpeed(M2.Out);
 }
-
+int flag_Tim;
 void Task1(void)
 {
 	if (Serial_RxFlag == 1)
@@ -89,14 +88,48 @@ void Task1(void)
 				num = num * 10 + Serial_RxPacket[i] - '0';
 			}
 			num *= flag;
-			OLED_ShowSignedNum(4, 7, num, 4);
 			Speed = num;
 		}
 		Serial_RxFlag = 0;
 	}
-	PID_SetSpeed1(Speed);
-	PID_SetSpeed2(Speed);
-	Serial_Printf("%d,%d,%d\n", 0, SSpeed1, SSpeed2);
+	if (flag_Tim)
+	{
+		flag_Tim = 0;
+		PID_SetSpeed1(Speed);
+		PID_SetSpeed2(Speed);
+	}
+	Serial_Printf("%d,%d,%d\n", Speed , SSpeed1, SSpeed2);
+//	OLED_ShowFloatNum(4, 7, M1.Ki, 4);
+}
+
+void PID_Init_A2(void)
+{
+	A2 = AInit;
+	A2.Kp = 0.8;
+	A2.Ki = 0.05;
+	A2.Kd = 0.1;
+}
+
+void PID_SetAngle2(int32_t Angle)
+{
+	A2.Target = Angle;
+	A2.Actual = Angle2;
+	
+	/*获取本次误差、上次误差和上上次误差*/
+	A2.Error2 = A2.Error1;			//获取上上次误差
+	A2.Error1 = A2.Error0;			//获取上次误差
+	A2.Error0 = A2.Target - A2.Actual;	//获取本次误差，目标值减实际值，即为误差值
+	
+	/*PID计算*/
+	/*使用增量式PID公式，计算得到输出值*/
+	A2.Out += A2.Kp * (A2.Error0 - A2.Error1) + A2.Ki * A2.Error0
+			+ A2.Kd * (A2.Error0 - 2 * A2.Error1 + A2.Error2);
+	
+	/*输出限幅*/
+	if (A2.Out > 100) {A2.Out = 100;}		//限制输出值最大为100
+	if (A2.Out < -100) {A2.Out = -100;}	//限制输出值最小为100
+	
+	Motor2_SetSpeed(A2.Out);
 }
 
 void Task2(void)
@@ -105,22 +138,21 @@ void Task2(void)
 	{
 		Serial_RxFlag = 0;
 	}
-	Angle1 = Encoder1_Get();
-	PID_SetSpeed2(Angle1);
-	Serial_Printf("%d,%d,%d\n", 0, SSpeed1, SSpeed2);
+	PID_SetAngle2(Angle1);
+	Serial_Printf("%d,%d,%d\n", 0, Angle1, Angle2);
+	OLED_ShowSignedNum(1, 7, Angle1, 5);
+	OLED_ShowSignedNum(2, 7, Angle2, 5);
 }
-
-int Flag_Tim;
 
 void TaskClear(void)
 {
-	Speed = 0;
-	Angle1 = 0;
-	Angle2 = 0;
+	Speed = SSpeed1 = SSpeed2 = 0;
+	Angle1 = Angle2 = 0;
 	Motor1_SetSpeed(0);
 	Motor2_SetSpeed(0);
 	PID_Init_M1();
 	PID_Init_M2();
+	PID_Init_A2();
 }
 
 int main(void)
@@ -131,10 +163,15 @@ int main(void)
 	Encoder_Init();
 	Motor_Init();
 	Serial_Init();
-	PID_Init_M1();
-	PID_Init_M2();
-	int TaskMode = 1;
+	MInit = (struct PID){0, 0, 0, 0, 0, 0, 0, 0, 0};
+	AInit = (struct PID){0, 0, 0, 0, 0, 0, 0, 0, 0};
+	TaskClear();
 	OLED_ShowString(1, 1, "Task1");
+//	while (1)
+//	{
+//		Motor1_SetSpeed(50);
+//		OLED_ShowSignedNum(2, 1, SSpeed1, 4);
+//	}
 	while (1)
 	{
 		if (TaskMode == 1)
@@ -148,6 +185,7 @@ int main(void)
 		if (Key_Check(2, KEY_UP))
 		{
 			TaskMode ^= 1;
+			TaskClear();
 			if (TaskMode == 1)
 			{
 				OLED_ShowString(1, 1, "Task1");
@@ -157,10 +195,9 @@ int main(void)
 				OLED_ShowString(1, 1, "Task2");
 			}
 		}
-		if (Flag_Tim)
-		{
-			Flag_Tim = 0;
-		}
+		OLED_ShowSignedNum(2, 1, Speed, 4);
+		OLED_ShowSignedNum(3, 1, SSpeed1, 4);
+		OLED_ShowSignedNum(4, 1, SSpeed2, 4);
 	}
 }
 
@@ -174,9 +211,20 @@ void TIM1_UP_IRQHandler(void)
 		if (Speed_Tim >= 10)
 		{
 			Speed_Tim = 0;
-			Flag_Tim = 0;
-			SSpeed1 = Encoder1_Get();
-			SSpeed2 = Encoder2_Get();
+			if (TaskMode == 1)
+			{
+				flag_Tim = 1;
+				SSpeed1 = Encoder1_Get();
+				SSpeed2 = Encoder2_Get();
+	//			SSpeed1 = SSpeed1 * 60.0f / 48 / 0.01 / 13;
+	//			SSpeed2 = SSpeed2 * 60.0f / 48 / 0.01 / 13;
+			}
+			else
+			{
+				flag_Tim = 1;
+				Angle1 += Encoder1_Get();
+				Angle2 += Encoder2_Get();
+			}
 		}
 		TIM_ClearITPendingBit(TIM1, TIM_IT_Update);
 	}

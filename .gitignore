@@ -1,0 +1,31 @@
+# 忽略操作系统生成的文件
+DS_Store
+
+# 忽略 IDE 生成的配置文件
+idea/
+*.iml
+
+# 忽略编译生成的文件
+*.o
+
+# 忽略软件包文件夹
+node_modules/
+
+# 忽略包含敏感信息的文件
+env
+
+# 忽略所有日志文件
+*.log
+
+# 忽略根目录下的 text.txt 文件
+/text.txt
+
+# 忽略所有名称为 text.txt 的文件
+text.txt
+
+# 忽略名为 test 的目录
+test/
+
+# 忽略所有 .md 文件，但不忽略 README.md
+*.md
+!README.md
